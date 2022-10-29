@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.diagnostics.disabled": ["unresolved-macro-call"],
+  "explorer.compactFolders": false,
+  "discord.enabled": false
+}

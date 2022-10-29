@@ -1,0 +1,19 @@
+[package]
+name = "circuit"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+name = "prepare_circuit"
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = { version="1.0.130", features = ["derive"] }
+serde_json = { version="1.0.68" }
+regex = { version="1.5.4" }
+rand = { version="0.8.4" }
+itertools = "0.10.3"
+
+[dependencies.pyo3]
+version = "0.16.5"
+features = ["extension-module"]

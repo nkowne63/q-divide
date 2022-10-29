@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "debug unit test",
+      "cargo": {
+        "args": ["test", "--lib"],
+        "filter": {
+          "name": "circuit",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

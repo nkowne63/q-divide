@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+maturin = "*"
+ipykernel = "*"
+pyzx = "*"
+ipywidgets = "*"
+multiprocess = "*"
+jupyter = "*"
+notebook = "*"
+matplotlib = "*"
+qiskit = "*"
+numpy = "*"
+pylatexenc = "*"
+# for jupyter
+appnope = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
+
+[scripts]
+jn="jupyter notebook"
