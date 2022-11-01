@@ -63,6 +63,47 @@ def add_end_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: int,
     circuit.ccx(t3,t1,t2)
     circuit.h(t2)
 
+def create_qrom_without_succinct(control: int, target: int, val: int=0, data: str=None) -> QuantumCircuit:
+    ancilla = control
+    num_qubit = control + target + ancilla + 1
+    qr = QuantumRegister(num_qubit, 'q')
+    circuit = QuantumCircuit(qr)
+
+    circuit.x(0)
+    for ind in range(control):
+        if val%2==1:
+            circuit.x(1+ind*2)
+        val//=2
+    circuit.barrier()
+
+    cur = 0
+    for ind in range(control):
+        add_toffoli(circuit, cur, cur+1, cur+2, 0, 1)
+        cur += 2
+    for step in range(2**control):
+        for ind in range(target):
+            if data is None:
+                circuit.cx(cur, cur+1+ind)
+            elif data[step]=='1':
+                circuit.cx(cur, cur+1+ind)
+        rev = 0
+        step_sub = step
+        while step_sub%2!=0:
+            step_sub//=2
+            rev+=1
+        # print(step, rev)
+        for ind in range(rev):
+            add_toffoli(circuit, cur-2,cur-1,cur,0,0)
+            cur -= 2
+        if step+1 == 2**control:
+            break
+        circuit.cx(cur-2,cur)
+        for ind in range(rev):
+            add_toffoli(circuit, cur,cur+1,cur+2,0,1)
+            cur += 2
+    return circuit
+
+
 def create_qrom(control: int, target: int, succinct: bool, val: int=0, data: str=None) -> QuantumCircuit:
     ancilla = control
     num_qubit = control + target + ancilla + 1
