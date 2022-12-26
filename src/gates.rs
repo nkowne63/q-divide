@@ -1,7 +1,5 @@
-use std::convert::TryInto;
-
-use crate::{util::cellize, pyzx::serialize_utils::QubitSerializeUtil};
 use super::primitive::*;
+use crate::{pyzx::serialize_utils::QubitSerializeUtil, util::cellize};
 
 pub fn cnot(q1: QubitCell, q2: QubitCell) {
     let control_from = Qubit::control(q1);
@@ -151,7 +149,7 @@ pub fn generate_random_datas(count: usize, length: usize) -> Vec<Vec<bool>> {
         for _ in 0..length {
             // let rng_value = rng.gen::<bool>();
             // inner_vec.push(rng_value);
-            inner_vec = vec![true;length]
+            inner_vec = vec![true; length]
         }
         ret.push(inner_vec)
     }
@@ -161,53 +159,73 @@ pub fn generate_random_datas(count: usize, length: usize) -> Vec<Vec<bool>> {
 //// dist-select
 
 pub fn divide_qubits(count: i32, original: Vec<QubitCell>) -> (Vec<QubitCell>, Vec<QubitCell>) {
-    (original[..count as usize].to_vec(), original[count as usize..].to_vec())
+    (
+        original[..count as usize].to_vec(),
+        original[count as usize..].to_vec(),
+    )
 }
 
 // [a,b] -> [[a,b],[a',b']] -> [[a,b],[a',b'], [a'', b''], [a''', b''']] -> ...
 pub fn cnot_copy_n(n: i32, original: Vec<QubitCell>) -> Vec<Vec<QubitCell>> {
-    if n <= 0 {
+    if n < 0 {
         panic!("n must be greater than 0");
     }
     if n == 0 {
         return vec![original];
     }
-    let target = original.iter().enumerate().map(|(idx, q)| {
-        let target = cellize(Qubit::new(format!("{}-copy-{}-layer-{}", q.qubit_id(), idx, n).as_str()));
-        cnot(q.clone(), target.clone());
-        target
-    }).collect::<Vec<QubitCell>>();
-    let vec_first = cnot_copy_n(n-1, original);
-    let vec_second = cnot_copy_n(n-1, target);
+    let target = original
+        .iter()
+        .enumerate()
+        .map(|(idx, q)| {
+            let target = cellize(Qubit::new(
+                format!("{}-copy-{}-layer-{}", q.qubit_id(), idx, n).as_str(),
+            ));
+            cnot(q.clone(), target.clone());
+            target
+        })
+        .collect::<Vec<QubitCell>>();
+    let vec_first = cnot_copy_n(n - 1, original);
+    let vec_second = cnot_copy_n(n - 1, target);
     [vec_first, vec_second].concat()
 }
 
 // return value: (original, ancilla)
 pub fn cnot_uncopy_n(n: i32, doubled: Vec<QubitCell>) -> (Vec<QubitCell>, Vec<QubitCell>) {
-    if n <= 0 {
-        panic!("n must be greater than 0");
+    if n < 0 {
+        panic!("n must be greater than or equals to 0");
     }
-    if n % 2 != 0 {
-        panic!("n must be even");
+    if doubled.len() % 2 != 0 {
+        panic!("doubled.len() must be even");
     }
     if n == 0 {
         return (doubled, vec![]);
     }
-    let half: usize = (n / 2).try_into().unwrap();
+    let half: usize = doubled.len() / 2;
     let (higher, lower) = divide_qubits(half as i32, doubled);
     // この時点で(original, ancilla)になっている
-    let uncopied_higher = cnot_uncopy_n(n-1, higher);
-    let uncopied_lower = cnot_uncopy_n(n-1, lower);
+    let uncopied_higher = cnot_uncopy_n(n - 1, higher);
+    let uncopied_lower = cnot_uncopy_n(n - 1, lower);
     let original_len = uncopied_higher.0.len();
     (0..original_len).for_each(|idx| {
-        cnot(uncopied_higher.0[idx].clone(), uncopied_lower.0[idx].clone());
+        cnot(
+            uncopied_higher.0[idx].clone(),
+            uncopied_lower.0[idx].clone(),
+        );
     });
     // higherのoriginalだけをoriginalとして返す
-    (uncopied_higher.0, [uncopied_lower.0, uncopied_higher.1, uncopied_lower.1].concat())
+    (
+        uncopied_higher.0,
+        [uncopied_lower.0, uncopied_higher.1, uncopied_lower.1].concat(),
+    )
 }
 
 // return value: (original, ancilla, control)
-pub fn eq_ladder(value: Vec<bool>, control_from: ControlFrom, original: Vec<QubitCell>, ancillas: Vec<QubitCell>) -> (Vec<QubitCell>,Vec<QubitCell>,ControlFrom) {
+pub fn eq_ladder(
+    value: Vec<bool>,
+    control_from: ControlFrom,
+    original: Vec<QubitCell>,
+    ancillas: Vec<QubitCell>,
+) -> (Vec<QubitCell>, Vec<QubitCell>, ControlFrom) {
     if value.len() != original.len() {
         panic!("value and original must be the same length");
     }
@@ -240,26 +258,57 @@ fn num_to_vec_bool(num: usize) -> Vec<bool> {
     ret
 }
 
+fn num2boolvec_fixed_length(num: usize, length: usize) -> Vec<bool> {
+    let mut ret = num_to_vec_bool(num);
+    while ret.len() < length {
+        ret.insert(0, false);
+    }
+    ret
+}
+
 // return value: (original, ancilla, control)
-pub fn dist_select_simple(high_count: i32, low_count: i32, control_from: ControlFrom, original: Vec<QubitCell>, name: String) -> (Vec<QubitCell>, Vec<QubitCell>, Vec<ControlFrom>) {
+pub fn dist_select_simple(
+    high_count: i32,
+    low_count: i32,
+    control_from: ControlFrom,
+    original: Vec<QubitCell>,
+    name: String,
+) -> (Vec<QubitCell>, Vec<QubitCell>, Vec<ControlFrom>) {
     let all_copied_blocks = cnot_copy_n(high_count, original.clone());
     let mut all_ancillas = vec![];
     let mut all_controls = vec![];
     for (block_idx, copied) in all_copied_blocks.iter().enumerate() {
         // prepare qubits
-        let ancillas = (0..high_count+low_count).map(|idx| cellize(Qubit::new(format!("{}-block-{}-ancilla-{}", name, block_idx,idx).as_str()))).collect::<Vec<QubitCell>>();
+        let ancillas = (0..high_count + low_count)
+            .map(|idx| {
+                cellize(Qubit::new(
+                    format!("{}-block-{}-ancilla-{}", name, block_idx, idx).as_str(),
+                ))
+            })
+            .collect::<Vec<QubitCell>>();
         let (higher_ancillas, lower_ancillas) = divide_qubits(high_count as i32, ancillas.clone());
         let (higher_copied, lower_copied) = divide_qubits(high_count as i32, copied.to_vec());
         // initialization
-        let (higher_copied, higher_ancillas, higher_carry) = eq_ladder(num_to_vec_bool(block_idx), control_from.clone(), higher_copied, higher_ancillas);
+        let (higher_copied, higher_ancillas, higher_carry) = eq_ladder(
+            num2boolvec_fixed_length(block_idx, higher_copied.len()),
+            control_from.clone(),
+            higher_copied,
+            higher_ancillas,
+        );
         // ladder
         let controls = in_over_2n(low_count, &higher_carry, lower_copied, lower_ancillas);
         all_controls.extend(controls);
         // uncomputation
-        eq_ladder(num_to_vec_bool(block_idx), control_from.clone(), higher_copied, higher_ancillas);
-        all_ancillas.extend(ancillas)
+        eq_ladder(
+            num2boolvec_fixed_length(block_idx, higher_copied.len()),
+            control_from.clone(),
+            higher_copied,
+            higher_ancillas,
+        );
+        all_ancillas.extend(ancillas);
     }
-    let (original, copied) = cnot_uncopy_n(high_count, original);
+    let all_copied_qubits = all_copied_blocks.concat();
+    let (original, copied) = cnot_uncopy_n(high_count, all_copied_qubits);
     all_ancillas.extend(copied);
     (original, all_ancillas, all_controls)
 }

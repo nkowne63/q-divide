@@ -12,6 +12,38 @@ use pyzx::to_json::*;
 use qasm::to_qasm::*;
 use util::*;
 
+use crate::gates::dist_select_simple;
+
+fn dist_select_simple_internal(n: i32, dist: i32) -> Vec<QubitCell> {
+    assert!(n > 0);
+    assert!(dist > 0);
+    assert!(dist <= n);
+    let mut qubits = Vec::new();
+    let first_qubit = cellize(Qubit::new("first"));
+    qubits.push(first_qubit.clone());
+    let first_control = Qubit::control(first_qubit.clone());
+    let datas = (0..n)
+        .map(|i| cellize(Qubit::new(format!("data_{}", i).as_str())))
+        .collect::<Vec<_>>();
+    let (datas, ancillas, controls) = dist_select_simple(
+        dist,
+        n - dist,
+        first_control,
+        datas,
+        "dist-select".to_string(),
+    );
+    qubits.extend(datas);
+    qubits.extend(ancillas);
+    let targets = (0..n)
+        .map(|i| cellize(Qubit::new(format!("target_{}", i).as_str())))
+        .collect::<Vec<_>>();
+    let random_data = generate_random_datas(controls.len(), 1);
+    inject_qrom_datas(targets.clone(), controls, random_data);
+    qubits.extend(targets);
+
+    qubits
+}
+
 fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {
     let mut qubits_vec = Vec::new();
     (0..count).for_each(|_| {
@@ -83,6 +115,16 @@ fn uniform_layered_internal_redundant(n: i32, count: i32, r: i32) -> Vec<Vec<Qub
         qubits_vec.push(qubits);
     });
     qubits_vec
+}
+
+#[pyfunction]
+fn dist_select_simple_export(n: i32, dist: i32) -> PyResult<String> {
+    println!("n: {}, dist: {}", n, dist);
+    let qubits = dist_select_simple_internal(n, dist);
+    println!("qubits.len(): {}", qubits.len());
+    // ここにバグがある？もしくは前提条件に違反している
+    let qasm_file = to_qasm(qubits);
+    Ok(qasm_file.to_string())
 }
 
 /// Formats the sum of two numbers as string.
@@ -282,7 +324,7 @@ fn output_json() -> PyResult<String> {
 /// import the module.
 #[pymodule]
 fn prepare_circuit(_py: Python, m: &PyModule) -> PyResult<()> {
-    println!("version 1.0.1");
+    println!("prepare-circuit version 1.0.8");
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(output_json, m)?)?;
     m.add_function(wrap_pyfunction!(test_gate, m)?)?;
@@ -292,5 +334,6 @@ fn prepare_circuit(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(uniform_layered, m)?)?;
     m.add_function(wrap_pyfunction!(uniform_layered_qasm, m)?)?;
     m.add_function(wrap_pyfunction!(uniform_layered_redundant, m)?)?;
+    m.add_function(wrap_pyfunction!(dist_select_simple_export, m)?)?;
     Ok(())
 }
