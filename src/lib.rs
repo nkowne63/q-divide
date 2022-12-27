@@ -122,7 +122,6 @@ fn dist_select_simple_export(n: i32, dist: i32) -> PyResult<String> {
     println!("n: {}, dist: {}", n, dist);
     let qubits = dist_select_simple_internal(n, dist);
     println!("qubits.len(): {}", qubits.len());
-    // ここにバグがある？もしくは前提条件に違反している
     let qasm_file = to_qasm(qubits);
     Ok(qasm_file.to_string())
 }

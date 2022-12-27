@@ -194,11 +194,11 @@ pub fn cnot_uncopy_n(n: i32, doubled: Vec<QubitCell>) -> (Vec<QubitCell>, Vec<Qu
     if n < 0 {
         panic!("n must be greater than or equals to 0");
     }
-    if doubled.len() % 2 != 0 {
-        panic!("doubled.len() must be even");
-    }
     if n == 0 {
         return (doubled, vec![]);
+    }
+    if doubled.len() % 2 != 0 {
+        panic!("doubled.len() must be even, but it is {}", doubled.len());
     }
     let half: usize = doubled.len() / 2;
     let (higher, lower) = divide_qubits(half as i32, doubled);
@@ -274,6 +274,7 @@ pub fn dist_select_simple(
     original: Vec<QubitCell>,
     name: String,
 ) -> (Vec<QubitCell>, Vec<QubitCell>, Vec<ControlFrom>) {
+    // clone datas
     let all_copied_blocks = cnot_copy_n(high_count, original.clone());
     let mut all_ancillas = vec![];
     let mut all_controls = vec![];

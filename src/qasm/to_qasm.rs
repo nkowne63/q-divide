@@ -7,9 +7,16 @@ pub fn to_qasm(qubit_cells: Vec<primitive::QubitCell>) -> operations::File {
     let qubit_id_map = serialize_utils::QubitIdMap::from_cells(&qubit_cells);
     let mut next_operations = serialize_utils::NextOperations::initialize_from_cells(&qubit_cells);
     let mut qasm_operations = Vec::new();
+    let mut count = 0;
     while next_operations.has_next() {
-        qasm_operations.extend(next_operations.to_qasm(&qubit_id_map));
+        // assert!(count < 1000, "Too many iterations");
+        let operation = next_operations.to_qasm(&qubit_id_map);
+        if operation.is_empty() {
+            break;
+        }
+        qasm_operations.extend(operation);
         next_operations.next();
+        count += 1;
     }
     operations::File {
         qubit_count,
