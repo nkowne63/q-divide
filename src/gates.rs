@@ -1,5 +1,6 @@
 use super::primitive::*;
 use crate::{pyzx::serialize_utils::QubitSerializeUtil, util::cellize};
+use rand::Rng;
 
 pub fn cnot(q1: QubitCell, q2: QubitCell) {
     let control_from = Qubit::control(q1);
@@ -312,6 +313,41 @@ pub fn dist_select_simple(
     let (original, copied) = cnot_uncopy_n(high_count, all_copied_qubits);
     all_ancillas.extend(copied);
     (original, all_ancillas, all_controls)
+}
+
+pub fn combine_random_cnots_m_interaction(
+    m: i32,
+    control_froms: Vec<ControlFrom>,
+    qubits: Vec<QubitCell>,
+) -> Vec<QubitCell> {
+    assert!(m > 0, "m must be positive");
+    // for each qubits iterate...
+    qubits
+        .iter()
+        .map(|qubit| {
+            // pick up m random control_from index from control_froms
+            let mut picked_control_froms_idx = vec![];
+            while picked_control_froms_idx.len() < m as usize {
+                let idx = rand::thread_rng().gen_range(0..control_froms.len());
+                if !picked_control_froms_idx.contains(&idx) {
+                    picked_control_froms_idx.push(idx);
+                }
+            }
+            // sort picked_control_froms_idx
+            picked_control_froms_idx.sort();
+            // pick up control_from from control_froms by index in picked_control_froms_idx
+            let picked_control_froms = picked_control_froms_idx
+                .iter()
+                .map(|idx| control_froms[*idx].clone())
+                .collect::<Vec<_>>();
+            // apply control_from to qubit
+            picked_control_froms.iter().for_each(|control_from| {
+                let control_target = Qubit::export(qubit.clone());
+                control_target.control_by(control_from);
+            });
+            qubit.clone()
+        })
+        .collect::<Vec<_>>()
 }
 
 #[cfg(test)]
