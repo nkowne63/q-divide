@@ -1,18 +1,23 @@
 pub mod gates;
 pub mod primitive;
+pub mod pyfunctions;
 pub mod pyzx;
 pub mod qasm;
 pub mod util;
 
-use gates::*;
-use primitive::*;
-use pyo3::prelude::*;
-use pyzx::json::*;
-use pyzx::to_json::*;
-use qasm::to_qasm::*;
-use util::*;
+use crate::gates::*;
+use crate::primitive::*;
+use crate::pyzx::json::*;
+use crate::pyzx::to_json::*;
+use crate::qasm::to_qasm::*;
+use crate::util::*;
 
-use crate::gates::dist_select_simple;
+use pyo3::prelude::*;
+
+use pyfunctions::{
+    json_based::{count_t_depth, layered, uniform_layered},
+    tests::{output_json, sum_as_string, test_gate, test_gate_qasm},
+};
 
 fn dist_select_simple_internal(n: i32, dist: i32) -> Vec<QubitCell> {
     assert!(n > 0);
@@ -127,27 +132,6 @@ fn dist_select_simple_export(n: i32, dist: i32) -> PyResult<String> {
     Ok(qasm_file.to_string())
 }
 
-/// Formats the sum of two numbers as string.
-#[pyfunction]
-fn sum_as_string(a: i32, b: i32) -> PyResult<String> {
-    Ok((a + b + 1).to_string())
-}
-
-#[pyfunction]
-fn uniform_layered(n: i32, count: i32) -> PyResult<Vec<String>> {
-    let qubits_vec = uniform_layered_internal(n, count);
-
-    let jsons = qubits_vec
-        .iter()
-        .map(|qubits| {
-            let pyzx_json = to_pyzx_circuit(qubits.clone());
-            serde_json::to_string(&pyzx_json).unwrap()
-        })
-        .collect::<Vec<_>>();
-
-    Ok(jsons)
-}
-
 /// generates uniform layered qrom in qasm format
 #[pyfunction]
 #[pyo3(text_signature = "(n, count, /)")]
@@ -181,156 +165,26 @@ fn uniform_layered_redundant(n: i32, count: i32, r: i32) -> PyResult<Vec<String>
     Ok(qasms)
 }
 
-#[pyfunction]
-#[pyo3(text_signature = "(json, /)")]
-fn count_t_depth(json: String) -> PyResult<i32> {
-    let pyzx: PyzxCircuitJson = serde_json::from_str(&json).unwrap();
-    let plane = pyzx.produce_plane();
-    let depth = PyzxCircuitJson::count_depth(&plane);
-    Ok(depth)
-}
-
-#[pyfunction]
-fn layered(n: i32) -> PyResult<String> {
-    println!();
-    let first_qubit = cellize(Qubit::new("first"));
-    let first_control = Qubit::control(first_qubit.clone());
-    let datas = (0..n)
-        .map(|i| cellize(Qubit::new(format!("data_{}", i).as_str())))
-        .collect::<Vec<_>>();
-    let ancillas = (0..n)
-        .map(|i| cellize(Qubit::new(format!("ancilla_{}", i).as_str())))
-        .collect::<Vec<_>>();
-    let controls = in_over_2n(n, &first_control, datas.clone(), ancillas.clone());
-    let target_sample_1 = cellize(Qubit::new("target_s1"));
-    let export_target_sample_1 = Qubit::export(target_sample_1.clone());
-    export_target_sample_1.control_by(&controls[0]);
-    let mut qubits = Vec::new();
-    qubits.extend(datas);
-    qubits.extend(ancillas);
-    qubits.push(first_qubit);
-    qubits.push(target_sample_1);
-
-    let pyzx_json = to_pyzx_circuit(qubits);
-    let json = serde_json::to_string(&pyzx_json).unwrap();
-    Ok(json)
-}
-
-#[pyfunction]
-fn test_gate() -> PyResult<String> {
-    let q1 = cellize(Qubit::new("q1"));
-    let q2 = cellize(Qubit::new("q2"));
-    let q3 = cellize(Qubit::new("q3"));
-    // let q4 = cellize(Qubit::new("q4"));
-    // let control = Qubit::control(q1.clone());
-    // let (leftc, _) = in_layer(&control, q2.clone(), q3.clone());
-    // let leftc = in_layer(&control, q2.clone(), q3.clone());
-    // let export = Qubit::export(q4.clone());
-    // export.control_by(&leftc);
-    toffoli(q1.clone(), q2.clone(), q3.clone());
-    // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone()]);
-    // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()]);
-    let pyzx_json = to_pyzx_circuit(vec![q1, q2, q3]);
-    let json = serde_json::to_string(&pyzx_json).unwrap();
-    Ok(json)
-}
-
-#[pyfunction]
-fn test_gate_qasm() -> PyResult<String> {
-    let q1 = cellize(Qubit::new("q1"));
-    let q2 = cellize(Qubit::new("q2"));
-    let q3 = cellize(Qubit::new("q3"));
-    // let q4 = cellize(Qubit::new("q4"));
-    // let control = Qubit::control(q1.clone());
-    // let (leftc, _) = in_layer(&control, q2.clone(), q3.clone());
-    // let leftc = in_layer(&control, q2.clone(), q3.clone());
-    // let export = Qubit::export(q4.clone());
-    // export.control_by(&leftc);
-    toffoli(q1.clone(), q2.clone(), q3.clone());
-    // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone()]);
-    // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()]);
-    let qasm_file = to_qasm(vec![q1, q2, q3]);
-    Ok(qasm_file.to_string())
-}
-
-#[pyfunction]
-fn output_json() -> PyResult<String> {
-    let mut wire_vertices = WireVertices::new();
-    wire_vertices.insert(
-        "b0".to_string(),
-        WireVerticesValue {
-            annotation: WireVerticesAnnotation {
-                boundary: true,
-                coord: vec![0.0, 0.0],
-                input: true,
-                output: false,
-            },
-        },
-    );
-    wire_vertices.insert(
-        "b1".to_string(),
-        WireVerticesValue {
-            annotation: WireVerticesAnnotation {
-                boundary: true,
-                coord: vec![2.0, 0.0],
-                input: false,
-                output: true,
-            },
-        },
-    );
-    let mut node_vertices = NodeVertices::new();
-    node_vertices.insert(
-        "v0".to_string(),
-        NodeVerticesValue {
-            annotation: NodeVerticesAnnotation {
-                coord: vec![1.0, 0.0],
-            },
-            data: NodeVerticesData {
-                kind: "Z".to_string(),
-                value: Some("\\pi".to_string()),
-                is_edge: None,
-            },
-        },
-    );
-    let mut undir_edges = UndirEdges::new();
-    undir_edges.insert(
-        "e0".to_string(),
-        UndirEdgesValue {
-            src: "b0".to_string(),
-            tgt: "v0".to_string(),
-        },
-    );
-    undir_edges.insert(
-        "e1".to_string(),
-        UndirEdgesValue {
-            src: "v0".to_string(),
-            tgt: "b1".to_string(),
-        },
-    );
-    let test_struct = PyzxCircuitJson {
-        wire_vertices,
-        node_vertices,
-        undir_edges,
-    };
-    let serialized = serde_json::to_string(&test_struct).unwrap();
-    Ok(serialized)
-}
-
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
 fn prepare_circuit(_py: Python, m: &PyModule) -> PyResult<()> {
     println!("prepare-circuit version 1.0.8");
+    // tests
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(output_json, m)?)?;
     m.add_function(wrap_pyfunction!(test_gate, m)?)?;
     m.add_function(wrap_pyfunction!(test_gate_qasm, m)?)?;
+    // json_based
     m.add_function(wrap_pyfunction!(layered, m)?)?;
     m.add_function(wrap_pyfunction!(count_t_depth, m)?)?;
     m.add_function(wrap_pyfunction!(uniform_layered, m)?)?;
+    // qasm_layerd
     m.add_function(wrap_pyfunction!(uniform_layered_qasm, m)?)?;
     m.add_function(wrap_pyfunction!(uniform_layered_redundant, m)?)?;
+    // dist_select_simple
     m.add_function(wrap_pyfunction!(dist_select_simple_export, m)?)?;
+    // m_body
     Ok(())
 }
