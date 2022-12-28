@@ -29,7 +29,7 @@ impl PartialEq for Operation {
             self.id == other.id && qcell_self == qcell_other
         } else {
             // parentが存在しない場合はfalse
-            return false;
+            false
         }
     }
 }
@@ -93,10 +93,9 @@ impl Qubit {
             node_type: NodeType::Control(0),
         });
         qcell.borrow_mut().operations.push(new_operation.clone());
-        let control_from = ControlFrom {
-            operation: new_operation.clone(),
-        };
-        return control_from;
+        ControlFrom {
+            operation: new_operation,
+        }
     }
     pub fn export(qcell: QubitCell) -> ControlTarget {
         let length = qcell.borrow().operations.len();
@@ -106,10 +105,9 @@ impl Qubit {
             node_type: NodeType::PreControlledNot,
         });
         qcell.borrow_mut().operations.push(new_operation.clone());
-        let control_target = ControlTarget {
-            operation: new_operation.clone(),
-        };
-        return control_target;
+        ControlTarget {
+            operation: new_operation,
+        }
     }
     pub fn gate(qcell: QubitCell, gate: PrimitiveGate) {
         let length = qcell.borrow().operations.len();
@@ -118,7 +116,7 @@ impl Qubit {
             parent: Rc::downgrade(&qcell),
             node_type: NodeType::PrimitiveGate(gate),
         });
-        qcell.borrow_mut().operations.push(new_operation.clone());
+        qcell.borrow_mut().operations.push(new_operation);
     }
 }
 
@@ -128,7 +126,7 @@ impl ControlTarget {
         let mut control_from_operation = control_from_operation.borrow_mut();
         if let NodeType::Control(count) = control_from_operation.node_type {
             control_from_operation.node_type = NodeType::Control(count + 1);
-            let operation = self.operation.clone();
+            let operation = self.operation;
             let mut operation = operation.borrow_mut();
             operation.node_type =
                 NodeType::ControlledNot(Rc::downgrade(&control_from.operation), count);
@@ -150,7 +148,7 @@ mod tests {
         control_target.control_by(&control_from);
         println!("qcell1, {:?}", qcell1);
         println!("qcell2, {:?}", qcell2);
-        let control_target_cell = qcell2.clone();
+        let control_target_cell = qcell2;
         let control_target_operation = &control_target_cell.borrow().operations[0];
         let control_target_operation = control_target_operation.clone();
         let control_target_node_type = &control_target_operation.borrow().node_type;
@@ -171,7 +169,7 @@ mod tests {
         control_target2.control_by(&control_from);
         println!("qcell1, {:?}", qcell1);
         println!("qcell2, {:?}", qcell2);
-        let control_target1_cell = qcell2.clone();
+        let control_target1_cell = qcell2;
         let operation_len = control_target1_cell.borrow().operations.len();
         assert_eq!(operation_len, 2);
     }
@@ -181,10 +179,10 @@ mod tests {
         let qcell2 = cellize(Qubit::new("2"));
         let control_from = Qubit::control(qcell1.clone());
         let control_target1 = Qubit::export(qcell2.clone());
-        let control_target2 = Qubit::export(qcell2.clone());
+        let control_target2 = Qubit::export(qcell2);
         control_target1.control_by(&control_from);
         control_target2.control_by(&control_from);
-        let control_from_cell = qcell1.clone();
+        let control_from_cell = qcell1;
         let control_from_operation = &control_from_cell.borrow().operations[0];
         let control_from_operation_node_type = &control_from_operation.borrow().node_type;
         let count = match control_from_operation_node_type {

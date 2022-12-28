@@ -7,7 +7,6 @@ pub fn to_qasm(qubit_cells: Vec<primitive::QubitCell>) -> operations::File {
     let qubit_id_map = serialize_utils::QubitIdMap::from_cells(&qubit_cells);
     let mut next_operations = serialize_utils::NextOperations::initialize_from_cells(&qubit_cells);
     let mut qasm_operations = Vec::new();
-    let mut count = 0;
     while next_operations.has_next() {
         // assert!(count < 1000, "Too many iterations");
         let operation = next_operations.to_qasm(&qubit_id_map);
@@ -16,7 +15,6 @@ pub fn to_qasm(qubit_cells: Vec<primitive::QubitCell>) -> operations::File {
         }
         qasm_operations.extend(operation);
         next_operations.next();
-        count += 1;
     }
     operations::File {
         qubit_count,
@@ -36,7 +34,7 @@ mod tests {
         let q2 = cellize(Qubit::new("q2"));
         let q3 = cellize(Qubit::new("q3"));
         toffoli(q1.clone(), q2.clone(), q3.clone());
-        let qasm_file = to_qasm(vec![q1.clone(), q2.clone(), q3.clone()]);
+        let qasm_file = to_qasm(vec![q1, q2, q3]);
         println!("{}", qasm_file.to_string());
     }
     #[test]
@@ -60,10 +58,10 @@ mod tests {
         inject_qrom_datas(targets.clone(), controls, random_data);
 
         let mut qubits = Vec::new();
-        qubits.extend(datas.clone());
-        qubits.extend(ancillas.clone());
-        qubits.extend(targets.clone());
-        qubits.push(first_qubit.clone());
+        qubits.extend(datas);
+        qubits.extend(ancillas);
+        qubits.extend(targets);
+        qubits.push(first_qubit);
 
         // println!("{:#?}", qubits);
 

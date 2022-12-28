@@ -21,7 +21,7 @@ fn dist_select_simple_internal(n: i32, dist: i32) -> Vec<QubitCell> {
     let mut qubits = Vec::new();
     let first_qubit = cellize(Qubit::new("first"));
     qubits.push(first_qubit.clone());
-    let first_control = Qubit::control(first_qubit.clone());
+    let first_control = Qubit::control(first_qubit);
     let datas = (0..n)
         .map(|i| cellize(Qubit::new(format!("data_{}", i).as_str())))
         .collect::<Vec<_>>();
@@ -37,6 +37,7 @@ fn dist_select_simple_internal(n: i32, dist: i32) -> Vec<QubitCell> {
     let targets = (0..n)
         .map(|i| cellize(Qubit::new(format!("target_{}", i).as_str())))
         .collect::<Vec<_>>();
+    // この時点でcontrols, targetsが存在している
     let random_data = generate_random_datas(controls.len(), 1);
     inject_qrom_datas(targets.clone(), controls, random_data);
     qubits.extend(targets);
@@ -65,10 +66,10 @@ fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {
         inject_qrom_datas(targets.clone(), controls, random_data);
 
         let mut qubits = Vec::new();
-        qubits.extend(datas.clone());
-        qubits.extend(ancillas.clone());
-        qubits.extend(targets.clone());
-        qubits.push(first_qubit.clone());
+        qubits.extend(datas);
+        qubits.extend(ancillas);
+        qubits.extend(targets);
+        qubits.push(first_qubit);
 
         qubits_vec.push(qubits);
     });
@@ -106,11 +107,11 @@ fn uniform_layered_internal_redundant(n: i32, count: i32, r: i32) -> Vec<Vec<Qub
         inject_qrom_datas(targets.clone(), controls, random_data);
 
         let mut qubits = Vec::new();
-        qubits.extend(datas.clone());
-        qubits.extend(ancillas.clone());
-        qubits.extend(targets.clone());
-        qubits.extend(redundant_targets.clone());
-        qubits.push(first_qubit.clone());
+        qubits.extend(datas);
+        qubits.extend(ancillas);
+        qubits.extend(targets);
+        qubits.extend(redundant_targets);
+        qubits.push(first_qubit);
 
         qubits_vec.push(qubits);
     });
@@ -140,8 +141,7 @@ fn uniform_layered(n: i32, count: i32) -> PyResult<Vec<String>> {
         .iter()
         .map(|qubits| {
             let pyzx_json = to_pyzx_circuit(qubits.clone());
-            let json = serde_json::to_string(&pyzx_json).unwrap();
-            json
+            serde_json::to_string(&pyzx_json).unwrap()
         })
         .collect::<Vec<_>>();
 
@@ -206,10 +206,10 @@ fn layered(n: i32) -> PyResult<String> {
     let export_target_sample_1 = Qubit::export(target_sample_1.clone());
     export_target_sample_1.control_by(&controls[0]);
     let mut qubits = Vec::new();
-    qubits.extend(datas.clone());
-    qubits.extend(ancillas.clone());
-    qubits.push(first_qubit.clone());
-    qubits.push(target_sample_1.clone());
+    qubits.extend(datas);
+    qubits.extend(ancillas);
+    qubits.push(first_qubit);
+    qubits.push(target_sample_1);
 
     let pyzx_json = to_pyzx_circuit(qubits);
     let json = serde_json::to_string(&pyzx_json).unwrap();
@@ -218,7 +218,6 @@ fn layered(n: i32) -> PyResult<String> {
 
 #[pyfunction]
 fn test_gate() -> PyResult<String> {
-    println!("");
     let q1 = cellize(Qubit::new("q1"));
     let q2 = cellize(Qubit::new("q2"));
     let q3 = cellize(Qubit::new("q3"));
@@ -231,14 +230,13 @@ fn test_gate() -> PyResult<String> {
     toffoli(q1.clone(), q2.clone(), q3.clone());
     // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone()]);
     // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()]);
-    let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone()]);
+    let pyzx_json = to_pyzx_circuit(vec![q1, q2, q3]);
     let json = serde_json::to_string(&pyzx_json).unwrap();
     Ok(json)
 }
 
 #[pyfunction]
 fn test_gate_qasm() -> PyResult<String> {
-    println!("");
     let q1 = cellize(Qubit::new("q1"));
     let q2 = cellize(Qubit::new("q2"));
     let q3 = cellize(Qubit::new("q3"));
@@ -251,7 +249,7 @@ fn test_gate_qasm() -> PyResult<String> {
     toffoli(q1.clone(), q2.clone(), q3.clone());
     // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone()]);
     // let pyzx_json = to_pyzx_circuit(vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()]);
-    let qasm_file = to_qasm(vec![q1.clone(), q2.clone(), q3.clone()]);
+    let qasm_file = to_qasm(vec![q1, q2, q3]);
     Ok(qasm_file.to_string())
 }
 

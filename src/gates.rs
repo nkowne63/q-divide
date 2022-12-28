@@ -100,7 +100,7 @@ pub fn in_over_2n(
         let data = datas[0].clone();
         let ancilla = ancillas[0].clone();
         let controls_tuple = in_layer(control, data, ancilla);
-        return vec![controls_tuple.0, controls_tuple.1];
+        vec![controls_tuple.0, controls_tuple.1]
     } else {
         let first_data = datas[0].clone();
         let first_ancilla = ancillas[0].clone();
@@ -275,7 +275,7 @@ pub fn dist_select_simple(
     name: String,
 ) -> (Vec<QubitCell>, Vec<QubitCell>, Vec<ControlFrom>) {
     // clone datas
-    let all_copied_blocks = cnot_copy_n(high_count, original.clone());
+    let all_copied_blocks = cnot_copy_n(high_count, original);
     let mut all_ancillas = vec![];
     let mut all_controls = vec![];
     for (block_idx, copied) in all_copied_blocks.iter().enumerate() {
