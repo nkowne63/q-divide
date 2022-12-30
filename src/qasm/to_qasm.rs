@@ -39,7 +39,9 @@ mod tests {
     }
     #[test]
     fn uniform_layered_test() {
-        use crate::gates::*;
+        use crate::select_gates::data_combine::*;
+        use crate::select_gates::simple_select_controls::*;
+
         let n = 4;
         let first_qubit = cellize(Qubit::new("first"));
         let first_control = Qubit::control(first_qubit.clone());

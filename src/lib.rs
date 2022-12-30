@@ -3,6 +3,7 @@ pub mod primitive;
 pub mod pyfunctions;
 pub mod pyzx;
 pub mod qasm;
+pub mod select_gates;
 pub mod util;
 
 use pyo3::prelude::*;

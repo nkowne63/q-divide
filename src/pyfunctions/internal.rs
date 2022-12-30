@@ -1,5 +1,6 @@
-use crate::gates::*;
 use crate::primitive::*;
+use crate::select_gates::data_combine::*;
+use crate::select_gates::simple_select_controls::*;
 use crate::util::*;
 
 pub fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {

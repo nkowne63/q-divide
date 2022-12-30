@@ -1,7 +1,7 @@
-use crate::gates::*;
 use crate::primitive::*;
 use crate::pyzx::json::*;
 use crate::pyzx::to_json::*;
+use crate::select_gates::simple_select_controls::*;
 use crate::util::*;
 
 use super::internal::uniform_layered_internal;

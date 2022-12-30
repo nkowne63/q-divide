@@ -1,6 +1,7 @@
-use crate::gates::*;
 use crate::primitive::*;
 use crate::qasm::to_qasm::*;
+use crate::select_gates::data_combine::*;
+use crate::select_gates::simple_dist_select::*;
 use crate::util::*;
 
 use pyo3::prelude::*;

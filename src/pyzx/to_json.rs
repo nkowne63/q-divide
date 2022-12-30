@@ -238,10 +238,8 @@ pub fn to_pyzx_circuit(qubit_cells: Vec<primitive::QubitCell>) -> json::PyzxCirc
 }
 #[cfg(test)]
 mod tests {
-    use crate::{
-        gates::{in_layer, toffoli},
-        util::cellize,
-    };
+    use crate::select_gates::simple_select_controls::*;
+    use crate::{gates::toffoli, util::cellize};
 
     use super::*;
     #[test]
