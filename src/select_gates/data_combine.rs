@@ -37,6 +37,10 @@ pub fn combine_random_cnots_m_interaction(
     qubits: Vec<QubitCell>,
 ) -> Vec<QubitCell> {
     assert!(m > 0, "m must be positive");
+    assert!(
+        m <= control_froms.len() as i32,
+        "m must be less than control_froms length"
+    );
     // for each qubits iterate...
     qubits
         .iter()
