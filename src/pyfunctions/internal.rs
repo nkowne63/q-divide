@@ -3,6 +3,7 @@ use crate::select_gates::data_combine::*;
 use crate::select_gates::simple_select_controls::*;
 use crate::util::*;
 
+// cyclomatic complexity: 1 + 4(loop) + 3-1(generate_datas) + 8-1(in_over_2n) + 4-1(inject_qrom_datas) = 17
 pub fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {
     let mut qubits_vec = Vec::new();
     (0..count).for_each(|_| {
@@ -19,9 +20,8 @@ pub fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {
         let targets = (0..n)
             .map(|i| cellize(Qubit::new(format!("target_{}", i).as_str())))
             .collect::<Vec<_>>();
-        // let target_length = targets.len();
-        let random_data = generate_random_datas(data_length, 1);
-        inject_qrom_datas(targets.clone(), controls, random_data);
+        let target_data = generate_datas(data_length, 1);
+        inject_qrom_datas(targets.clone(), controls, target_data);
 
         let mut qubits = Vec::new();
         qubits.extend(datas);
@@ -34,7 +34,6 @@ pub fn uniform_layered_internal(n: i32, count: i32) -> Vec<Vec<QubitCell>> {
     qubits_vec
 }
 
-// rだけ余分なものがある
 pub fn uniform_layered_internal_redundant(n: i32, count: i32, r: i32) -> Vec<Vec<QubitCell>> {
     let mut qubits_vec = Vec::new();
     (0..count).for_each(|_| {
@@ -61,7 +60,7 @@ pub fn uniform_layered_internal_redundant(n: i32, count: i32, r: i32) -> Vec<Vec
             })
             .collect::<Vec<_>>();
         // let target_length = targets.len();
-        let random_data = generate_random_datas(data_length, 1);
+        let random_data = generate_datas(data_length, 1);
         inject_qrom_datas(targets.clone(), controls, random_data);
 
         let mut qubits = Vec::new();

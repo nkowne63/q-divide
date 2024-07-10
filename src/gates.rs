@@ -32,6 +32,7 @@ pub fn toffoli(q1: QubitCell, q2: QubitCell, q3: QubitCell) {
     Qubit::gate(q3, PrimitiveGate::SDag);
 }
 
+// cyclomatic complexity: 1
 pub fn toffoli_first_control(q1c: &ControlFrom, q2: QubitCell, q3: QubitCell) {
     Qubit::gate(q3.clone(), PrimitiveGate::T);
 

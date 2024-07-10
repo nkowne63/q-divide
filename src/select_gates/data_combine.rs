@@ -1,8 +1,7 @@
 use crate::primitive::*;
 use rand::Rng;
 
-// data_listの1段目はctsのlengthと同じ
-// 2段目はqcsのlengthと同じ
+// cyclomatic complexity: 1 + 3(loop) = 4
 pub fn inject_qrom_datas(qcs: Vec<QubitCell>, cts: Vec<ControlFrom>, data_list: Vec<Vec<bool>>) {
     data_list.iter().enumerate().for_each(|(index, data)| {
         let control = &cts[index];
@@ -15,7 +14,8 @@ pub fn inject_qrom_datas(qcs: Vec<QubitCell>, cts: Vec<ControlFrom>, data_list: 
     });
 }
 
-pub fn generate_random_datas(count: usize, length: usize) -> Vec<Vec<bool>> {
+// cyclomatic complexity: 1 + 2(loop) = 3
+pub fn generate_datas(count: usize, length: usize) -> Vec<Vec<bool>> {
     // use rand::Rng;
     // let mut rng = rand::thread_rng();
     let mut ret = Vec::new();

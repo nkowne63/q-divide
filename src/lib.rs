@@ -9,9 +9,8 @@ pub mod util;
 use pyo3::prelude::*;
 
 use pyfunctions::{
-    dist_select_simple::dist_select_simple_export,
     json_based::{count_t_depth, layered, uniform_layered},
-    m_body::{dist_select_m_body, uniform_layered_m_body},
+    m_body::uniform_layered_m_body,
     qasm_layered::{uniform_layered_qasm, uniform_layered_redundant},
     tests::{output_json, sum_as_string, test_gate, test_gate_qasm},
 };
@@ -34,10 +33,7 @@ fn prepare_circuit(_py: Python, m: &PyModule) -> PyResult<()> {
     // qasm_layerd
     m.add_function(wrap_pyfunction!(uniform_layered_qasm, m)?)?;
     m.add_function(wrap_pyfunction!(uniform_layered_redundant, m)?)?;
-    // dist_select_simple
-    m.add_function(wrap_pyfunction!(dist_select_simple_export, m)?)?;
     // m_body
     m.add_function(wrap_pyfunction!(uniform_layered_m_body, m)?)?;
-    m.add_function(wrap_pyfunction!(dist_select_m_body, m)?)?;
     Ok(())
 }

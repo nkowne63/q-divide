@@ -17,6 +17,7 @@ def _parse_qobj_dict(qasm: str) -> dict:
     qobj_dict = qobj.to_dict()
     return qobj_dict
 
+# cyclomatic complexity 1 + 4 = 5
 def add_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: int, c2: int) -> None:
     # print(t1,t2,t3)
     if c1 == 1:
@@ -29,6 +30,7 @@ def add_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: int, c2:
     if c2 == 1:
         circuit.x(t2)
 
+# cyclomatic complexity 1 + 4 = 5
 def add_start_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: int, c2: int) -> None:
     if c1 == 1:
         circuit.x(t1)
@@ -50,6 +52,7 @@ def add_start_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: in
     if c2 == 1:
         circuit.x(t2)
 
+# cyclomatic complexity 1 + 2 = 3
 def add_end_toffoli(circuit: QuantumCircuit, t1: int, t2: int, t3: int, c1: int, c2: int, meas:int) -> None:
     if c1 == 1:
         circuit.x(t1)
@@ -103,7 +106,7 @@ def create_qrom_without_succinct(control: int, target: int, val: int=0, data: st
             cur += 2
     return circuit
 
-
+# cyclomatic complexity 1 + 12(if) + 7(loop) + 5-1(add_toffoli) + 5-1(add_start_toffoli) + 3-1(add_end_toffoli) = 30
 def create_qrom(control: int, target: int, succinct: bool, val: int=0, data: str=None) -> QuantumCircuit:
     ancilla = control
     num_qubit = control + target + ancilla + 1

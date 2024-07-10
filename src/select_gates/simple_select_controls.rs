@@ -1,6 +1,7 @@
 use crate::gates::*;
 use crate::primitive::*;
 
+// cyclomatic complexity: 1
 pub fn in_layer(
     q1c: &ControlFrom,
     data: QubitCell,
@@ -25,6 +26,7 @@ pub fn in_layer(
     (control_left, control_right)
 }
 
+// cyclomatic complexity: 1 + 5(condition) + 2(recursion)= 8(no increase by subsequent call)
 pub fn in_over_2n(
     n: i32,
     control: &ControlFrom,

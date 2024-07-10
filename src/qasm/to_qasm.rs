@@ -56,7 +56,7 @@ mod tests {
         let targets = (0..n)
             .map(|i| cellize(Qubit::new(format!("target_{}", i).as_str())))
             .collect::<Vec<_>>();
-        let random_data = generate_random_datas(data_length, 1);
+        let random_data = generate_datas(data_length, 1);
         inject_qrom_datas(targets.clone(), controls, random_data);
 
         let mut qubits = Vec::new();
