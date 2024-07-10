@@ -1,14 +1,15 @@
 # Q-DIVIDE
 
+## Cyclomatic complexity
+
 SELECT circuit implementation in Qiskit is [create_qrom](./pyimpl/qrom.py#L110), which cyclomatic complexity is 30.
 
 Implementation in Q-DIVIDE is [uniform_layered_internal](./src/pyfunctions/internal.rs#L7), which cyclomatic complexity is 17.
 
-Both complexities include that of subsequent function calls, and are counted in terms of elementary gates.
+Both complexities include that of subsequent function calls, and both are counted in terms of elementary gates.
 
-# how to call rust functions in python
+## How to call rust functions in python
 
-## setup
 
 You should first enter the python virtual environment.
 
