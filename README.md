@@ -4,7 +4,7 @@
 
 SELECT circuit implementation in Qiskit is [create_qrom](./pyimpl/qrom.py#L110), which cyclomatic complexity is 30.
 
-Implementation in Q-DIVIDE is [uniform_layered_internal](./src/pyfunctions/internal.rs#L7), which cyclomatic complexity is 17.
+Implementation in Q-Divide is [uniform_layered_internal](./src/pyfunctions/internal.rs#L7), which cyclomatic complexity is 17.
 
 Both complexities include that of subsequent function calls, and both are counted in terms of elementary gates.
 
