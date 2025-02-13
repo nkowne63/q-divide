@@ -1,4 +1,8 @@
-#[derive(Hash, Eq, PartialEq, derive_more::Display, Clone, Copy, serde::Serialize, serde::Deserialize)]
+use derive_more::Display;
+use serde::{Serialize, Deserialize};
+
+
+#[derive(Hash, Eq, PartialEq, Display, Clone, Copy, Serialize, Deserialize)]
 pub enum Unitary {
     X,
     Y,
@@ -10,13 +14,13 @@ pub enum Unitary {
     Sdag,
 }
 
-#[derive(Hash, Eq, PartialEq, derive_more::Display, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Hash, Eq, PartialEq, Display, Clone, Serialize, Deserialize)]
 pub enum Control {
     Truthy,
     Falsy,
 }
 
-#[derive(Hash, Eq, PartialEq, derive_more::Display, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Hash, Eq, PartialEq, Display, Clone, Serialize, Deserialize)]
 pub enum GateFragmentLabel {
     Unitary(Unitary),
     Instrument,
@@ -28,7 +32,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 static GLOBAL_GATE_FRAGMENT_ID: AtomicUsize = AtomicUsize::new(0);
 
-#[derive(Hash, Eq, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct GateFragment {
     id: usize,
     label: GateFragmentLabel,
