@@ -28,22 +28,26 @@ pub enum GateFragmentLabel {
 }
 
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use crate::utils::counters::Counter;
 
-static GLOBAL_GATE_FRAGMENT_ID: AtomicUsize = AtomicUsize::new(0);
+static GLOBAL_GATE_FRAGMENT_ID: Counter = Counter::new();
 
 #[derive(Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct GateFragment {
     id: usize,
     label: GateFragmentLabel,
+    in_symbol: (),
+    out_symbol: (),
 }
 
 impl GateFragment {
     pub fn new(label: GateFragmentLabel) -> Self {
-        let id = GLOBAL_GATE_FRAGMENT_ID.fetch_add(1, Ordering::Relaxed);
+        let id = GLOBAL_GATE_FRAGMENT_ID.increment();
         GateFragment {
             id,
             label,
+            in_symbol: (),
+            out_symbol: (),
         }
     }
     
