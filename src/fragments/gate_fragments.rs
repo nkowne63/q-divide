@@ -27,6 +27,14 @@ pub enum GateFragmentLabel {
     Control(Control),
 }
 
+impl GateFragmentLabel {
+    pub fn is_measurement(&self) -> bool {
+        match self {
+            GateFragmentLabel::Instrument => true,
+            _ => false,
+        }
+    }
+}
 
 use crate::utils::counters::Counter;
 
@@ -35,7 +43,7 @@ static GLOBAL_GATE_FRAGMENT_ID: Counter = Counter::new();
 #[derive(Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct GateFragment {
     id: usize,
-    label: GateFragmentLabel,
+    pub label: GateFragmentLabel,
     in_symbol: (),
     out_symbol: (),
 }
