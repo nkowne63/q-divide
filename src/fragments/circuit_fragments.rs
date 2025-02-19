@@ -1,16 +1,16 @@
+use crate::utils::union_find::UnionFind;
 use crate::utils::counters::Counter;
 use super::gate_fragments::GateFragment;
 
 static GLOBAL_CIRCUIT_FRAGMENT_ID: Counter = Counter::new();
 
-use petgraph::unionfind::UnionFind;
 use std::collections::HashMap;
 
 pub struct CircuitFragment {
     pub id: usize,
     pub gate_fragments: Vec<GateFragment>,
     pub qubit_edges: HashMap<usize, usize>,
-    pub control_edges: UnionFind<usize>,
+    pub control_edges: UnionFind,
     pub feedback_edges: HashMap<Vec<usize>, Vec<(usize, String)>>,
 }
 
@@ -25,5 +25,12 @@ impl CircuitFragment {
             control_edges: UnionFind::new(len),
             feedback_edges: HashMap::new(),
         }
+    }
+
+    pub fn add_gate_fragment(&mut self, gate_fragment: GateFragment) -> Result<(), String> {
+        self.gate_fragments.push(gate_fragment);
+        self.control_edges.ensure(self.gate_fragments.len());
+
+        Ok(())
     }
 }
