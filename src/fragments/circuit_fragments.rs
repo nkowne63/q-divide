@@ -33,4 +33,10 @@ impl CircuitFragment {
 
         Ok(())
     }
+
+    pub fn remove_gate_fragment(&mut self, id: usize) -> Result<(), String> {
+        self.gate_fragments.retain(|fragment| fragment.id != id as usize);
+        self.control_edges.remove(id);
+        Ok(())
+    }
 }
