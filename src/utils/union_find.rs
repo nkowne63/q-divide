@@ -90,4 +90,121 @@ impl UnionFind {
     pub fn len(&self) -> usize {
         self.parent.len()
     }
+
+    /// Removes an element from the UnionFind.
+    pub fn remove(&mut self, x: usize) {
+        if x < self.parent.len() {
+            self.parent[x] = x;
+            self.rank[x] = 0;
+        }
+    }
+
+    /// Returns the number of disjoint sets.
+    pub fn count(&mut self) -> usize {
+        let mut roots = std::collections::HashSet::new();
+        for i in 0..self.parent.len() {
+            roots.insert(self.find(i));
+        }
+        roots.len()
+    }
+
+    /// Returns the size of the component containing element x.
+    pub fn component_size(&mut self, x: usize) -> usize {
+        let root = self.find(x);
+        let mut size = 0;
+        for i in 0..self.parent.len() {
+            if self.find(i) == root {
+                size += 1;
+            }
+        }
+        size
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_and_len() {
+        let mut uf = UnionFind::new(5);
+        assert_eq!(uf.len(), 5);
+        for i in 0..5 {
+            assert_eq!(uf.find(i), i);
+        }
+    }
+
+    #[test]
+    fn test_add() {
+        let mut uf = UnionFind::new(3);
+        let new_id = uf.add();
+        assert_eq!(new_id, 3);
+        assert_eq!(uf.len(), 4);
+        assert_eq!(uf.find(new_id), new_id);
+    }
+
+    #[test]
+    fn test_add_many() {
+        let mut uf = UnionFind::new(2);
+        let ids = uf.add_many(3);
+        assert_eq!(ids, vec![2, 3, 4]);
+        assert_eq!(uf.len(), 5);
+        for id in ids {
+            assert_eq!(uf.find(id), id);
+        }
+    }
+
+    #[test]
+    fn test_ensure() {
+        let mut uf = UnionFind::new(2);
+        uf.ensure(5);
+        assert_eq!(uf.len(), 5);
+        uf.ensure(3);
+        assert_eq!(uf.len(), 5);
+    }
+
+    #[test]
+    fn test_union_and_same_set() {
+        let mut uf = UnionFind::new(4);
+        assert!(uf.union(0, 1));
+        assert!(uf.same_set(0, 1));
+        assert!(!uf.union(0, 1));
+        assert!(uf.union(2, 3));
+        assert!(uf.same_set(2, 3));
+        assert!(!uf.same_set(0, 2));
+        assert!(uf.union(1, 2));
+        for i in 0..4 {
+            assert!(uf.same_set(0, i));
+        }
+    }
+
+    #[test]
+    fn test_count() {
+        let mut uf = UnionFind::new(5);
+        assert_eq!(uf.count(), 5);
+        uf.union(0, 1);
+        uf.union(1, 2);
+        assert_eq!(uf.count(), 3);
+    }
+
+    #[test]
+    fn test_component_size() {
+        let mut uf = UnionFind::new(5);
+        for i in 0..5 {
+            assert_eq!(uf.component_size(i), 1);
+        }
+        uf.union(0, 1);
+        uf.union(1, 2);
+        assert_eq!(uf.component_size(0), 3);
+        assert_eq!(uf.component_size(3), 1);
+    }
+
+    #[test]
+    fn test_remove() {
+        let mut uf = UnionFind::new(4);
+        uf.union(0, 1);
+        uf.remove(1);
+        assert_eq!(uf.find(1), 1);
+        assert!(!uf.same_set(0, 1));
+    }
 }
