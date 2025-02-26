@@ -22,9 +22,36 @@ impl BacktrackableEdges {
         self.edges.insert(a, b);
         self.backtrack.insert(b, a);
     }
-    fn remove(&mut self, a: usize) {
-        let b = self.edges.remove(&a).unwrap();
-        self.backtrack.remove(&b);
+    fn remove(&mut self, a: usize) -> Option<usize>{
+        let b = self.edges.remove(&a)?;
+        self.backtrack.remove(&b)
+    }
+}
+
+pub struct LabeledFeedbackEdges {
+    edges: HashMap<Vec<usize>, Vec<(usize, String)>>,
+    labels: HashMap<String, Vec<usize>>,
+}
+
+impl LabeledFeedbackEdges {
+    fn new() -> Self {
+        LabeledFeedbackEdges {
+            edges: HashMap::new(),
+            labels: HashMap::new(),
+        }
+    }
+    fn insert(&mut self, measurements: Vec<usize>, target: usize, label: String) {
+        self.edges.entry(measurements).or_insert(Vec::new()).push((target, label.clone()));
+        self.labels.entry(label).or_insert(Vec::new()).push(target);
+    }
+    fn remove(&mut self, label: String) -> Option<()>{
+        let measurements = self.labels.remove(&label)?;
+        let edges = self.edges.get_mut(&measurements)?;
+        edges.retain(|(_, l)| l != &label);
+        if edges.is_empty() {
+            self.edges.remove(&measurements)?;
+        }
+        return Some(());
     }
 }
 
@@ -33,7 +60,7 @@ pub struct CircuitFragment {
     pub gate_fragments: Vec<GateFragment>,
     pub qubit_edges: BacktrackableEdges,
     pub control_edges: UnionFind,
-    pub feedback_edges: HashMap<Vec<usize>, Vec<(usize, String)>>,
+    pub feedback_edges: LabeledFeedbackEdges,
 }
 
 impl CircuitFragment {
@@ -45,7 +72,7 @@ impl CircuitFragment {
             gate_fragments: gate_fragments,
             qubit_edges: BacktrackableEdges::new(),
             control_edges: UnionFind::new(len),
-            feedback_edges: HashMap::new(),
+            feedback_edges: LabeledFeedbackEdges::new(),
         }
     }
 
@@ -73,10 +100,7 @@ impl CircuitFragment {
         Ok(())
     }
     pub fn disconnect_qubit_edges(&mut self, source: usize) -> Result<(), String> {
-        if !self.qubit_edges.edges.contains_key(&source) {
-            return Err(format!("GateFragment {} is not connected as start", source));
-        };
-        self.qubit_edges.remove(source);
+        self.qubit_edges.remove(source).ok_or(format!("GateFragment {} is not connected as start", source))?;
         Ok(())
     }
     pub fn unite_control_edges(&mut self, a: usize, b: usize) -> Result<(), String> {
@@ -88,9 +112,11 @@ impl CircuitFragment {
         Ok(())
     }
     pub fn connect_feedback_edges(&mut self, measurements: Vec<usize>, target: usize, label: String) -> Result<(), String> {
-        todo!()
+        self.feedback_edges.insert(measurements, target, label);
+        Ok(())
     }
     pub fn remove_feedback_edges(&mut self, label: String) -> Result<(), String> {
-        todo!()
+        self.feedback_edges.remove(label).ok_or("Label not found")?;
+        Ok(())
     }
 }
