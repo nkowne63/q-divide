@@ -3,6 +3,7 @@
 pub struct UnionFind {
     parent: Vec<usize>,
     rank: Vec<usize>,
+    deleted: Vec<bool>,
 }
 
 impl UnionFind {
@@ -11,11 +12,13 @@ impl UnionFind {
     pub fn new(n: usize) -> Self {
         let mut parent = Vec::with_capacity(n);
         let mut rank = Vec::with_capacity(n);
+        let mut deleted = Vec::with_capacity(n);
         for i in 0..n {
             parent.push(i);
             rank.push(0);
+            deleted.push(false);
         }
-        UnionFind { parent, rank }
+        UnionFind { parent, rank, deleted }
     }
 
     /// Adds a new element and returns the ID of that element.
@@ -23,6 +26,7 @@ impl UnionFind {
         let id = self.parent.len();
         self.parent.push(id);
         self.rank.push(0);
+        self.deleted.push(false);
         id
     }
 
@@ -31,11 +35,13 @@ impl UnionFind {
         let start = self.parent.len();
         self.parent.reserve(count);
         self.rank.reserve(count);
+        self.deleted.reserve(count);
         let mut ids = Vec::with_capacity(count);
         for i in 0..count {
             let id = start + i;
             self.parent.push(id);
             self.rank.push(0);
+            self.deleted.push(false);
             ids.push(id);
         }
         ids
@@ -88,7 +94,7 @@ impl UnionFind {
 
     /// Returns the current number of elements.
     pub fn len(&self) -> usize {
-        self.parent.len()
+        self.deleted.iter().filter(|&&d| !d).count()
     }
 
     /// Removes an element from the UnionFind.
@@ -97,12 +103,16 @@ impl UnionFind {
             self.parent[x] = x;
             self.rank[x] = 0;
         }
+        self.deleted[x] = true;
     }
 
     /// Returns the number of disjoint sets.
     pub fn count(&mut self) -> usize {
         let mut roots = std::collections::HashSet::new();
         for i in 0..self.parent.len() {
+            if self.deleted[i] {
+                continue;
+            }
             roots.insert(self.find(i));
         }
         roots.len()
@@ -113,7 +123,7 @@ impl UnionFind {
         let root = self.find(x);
         let mut size = 0;
         for i in 0..self.parent.len() {
-            if self.find(i) == root {
+            if self.find(i) == root && !self.deleted[i] {
                 size += 1;
             }
         }

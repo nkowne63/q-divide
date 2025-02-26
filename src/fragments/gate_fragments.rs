@@ -43,9 +43,7 @@ static GLOBAL_GATE_FRAGMENT_ID: Counter = Counter::new();
 #[derive(Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct GateFragment {
     pub id: usize,
-    pub label: GateFragmentLabel,
-    in_symbol: (),
-    out_symbol: (),
+    pub label: GateFragmentLabel
 }
 
 impl GateFragment {
@@ -53,9 +51,7 @@ impl GateFragment {
         let id = GLOBAL_GATE_FRAGMENT_ID.increment();
         GateFragment {
             id,
-            label,
-            in_symbol: (),
-            out_symbol: (),
+            label
         }
     }
 }

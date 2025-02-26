@@ -53,6 +53,9 @@ impl LabeledFeedbackEdges {
         }
         return Some(());
     }
+    fn has_label(&self, label: &str) -> bool {
+        self.labels.contains_key(label)
+    }
 }
 
 pub struct CircuitFragment {
@@ -112,11 +115,51 @@ impl CircuitFragment {
         Ok(())
     }
     pub fn connect_feedback_edges(&mut self, measurements: Vec<usize>, target: usize, label: String) -> Result<(), String> {
+        if self.feedback_edges.has_label(&label) {
+            return Err(format!("Label {} is already in use", label));
+        }
         self.feedback_edges.insert(measurements, target, label);
         Ok(())
     }
     pub fn remove_feedback_edges(&mut self, label: String) -> Result<(), String> {
         self.feedback_edges.remove(label).ok_or("Label not found")?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn new() {
+        let c = CircuitFragment::new(vec![]);
+        assert_eq!(c.id, 0);
+        assert_eq!(c.gate_fragments.len(), 0);
+        assert_eq!(c.qubit_edges.edges.len(), 0);
+        assert_eq!(c.qubit_edges.backtrack.len(), 0);
+        assert_eq!(c.control_edges.len(), 0);
+        assert_eq!(c.feedback_edges.edges.len(), 0);
+    }
+
+    #[test]
+    fn add_gate_fragment() {
+        use super::super::gate_fragments::{GateFragment, GateFragmentLabel, Unitary};
+        let mut c = CircuitFragment::new(vec![]);
+        c.add_gate_fragment(GateFragment::new(GateFragmentLabel::Unitary(Unitary::H))).unwrap();
+        assert_eq!(c.gate_fragments.len(), 1);
+        assert_eq!(c.control_edges.len(), 1);
+    }
+
+    #[test]
+    fn remove_gate_fragment() {
+        use super::super::gate_fragments::{GateFragment, GateFragmentLabel, Unitary};
+        let mut c = CircuitFragment::new(vec![]);
+        let g = GateFragment::new(GateFragmentLabel::Unitary(Unitary::H));
+        let g_id = g.id;
+        c.add_gate_fragment(g).unwrap();
+        c.remove_gate_fragment(g_id).unwrap();
+        assert_eq!(c.gate_fragments.len(), 0);
+        assert_eq!(c.control_edges.len(), 0);
     }
 }
