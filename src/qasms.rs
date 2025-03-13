@@ -1,2 +1,1 @@
-// TODO: TBD
-// add qasm structure and validators, emitters
+// TODO: qasm structure and validators, emitters

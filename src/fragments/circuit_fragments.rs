@@ -125,6 +125,8 @@ impl CircuitFragment {
         self.feedback_edges.remove(label).ok_or("Label not found")?;
         Ok(())
     }
+
+    // TODO: join and divide for circuit fragments
 }
 
 #[cfg(test)]
