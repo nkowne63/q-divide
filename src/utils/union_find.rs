@@ -98,6 +98,7 @@ impl UnionFind {
     }
 
     /// Removes an element from the UnionFind.
+    /// TODO: shrink the size by change of data structure
     pub fn remove(&mut self, x: usize) {
         if x < self.parent.len() {
             self.parent[x] = x;
