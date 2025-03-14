@@ -57,6 +57,7 @@ impl UnionFind {
     }
 
     /// Returns the representative element of the set to which element x belongs. (with path compression)
+    /// TODO: to be immutable
     pub fn find(&mut self, x: usize) -> usize {
         if self.parent[x] != x {
             self.parent[x] = self.find(self.parent[x]);
@@ -129,6 +130,18 @@ impl UnionFind {
             }
         }
         size
+    }
+
+    pub fn get_groups(&mut self) -> std::collections::HashMap<usize, Vec<usize>> {
+        let mut groups = std::collections::HashMap::new();
+        for i in 0..self.parent.len() {
+            if self.deleted[i] {
+                continue;
+            }
+            let root = self.find(i);
+            groups.entry(root).or_insert(Vec::new()).push(i);
+        }
+        groups
     }
 }
 
