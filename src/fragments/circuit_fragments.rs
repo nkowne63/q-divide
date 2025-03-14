@@ -29,8 +29,8 @@ impl BacktrackableEdges {
 }
 
 pub struct LabeledFeedbackEdges {
-    edges: HashMap<Vec<usize>, Vec<(usize, String)>>,
-    labels: HashMap<String, Vec<usize>>,
+    pub edges: HashMap<Vec<usize>, Vec<(usize, String)>>,
+    pub labels: HashMap<String, Vec<usize>>,
 }
 
 impl LabeledFeedbackEdges {
