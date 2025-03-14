@@ -7,7 +7,7 @@ static GLOBAL_CIRCUIT_FRAGMENT_ID: Counter = Counter::new();
 use std::collections::HashMap;
 
 pub struct BacktrackableEdges {
-    edges: HashMap<usize, usize>,
+    pub edges: HashMap<usize, usize>,
     backtrack: HashMap<usize, usize>,
 }
 
