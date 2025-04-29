@@ -17,16 +17,15 @@ struct OpenQasmCircuit {
     gates: Vec<Gate>,
 }
 
-// TODO: conversion
 impl From<QuantumCircuit> for OpenQasmCircuit {
     fn from(circuit: QuantumCircuit) -> Self {
-        todo!()
+        todo!() // conversion
     }
 }
 
-// TODO: string output
 impl Display for OpenQasmCircuit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        todo!(); // string output
         write!(f, "qasm")
     }
 }

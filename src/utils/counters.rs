@@ -1,6 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-// TODO: replace counter by uuid or something which is not global mutable
 pub struct Counter {
     counter: AtomicUsize,
 }

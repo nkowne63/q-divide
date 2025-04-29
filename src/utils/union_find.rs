@@ -57,7 +57,6 @@ impl UnionFind {
     }
 
     /// Returns the representative element of the set to which element x belongs. (with path compression)
-    /// TODO: to be immutable
     pub fn find(&mut self, x: usize) -> usize {
         if self.parent[x] != x {
             self.parent[x] = self.find(self.parent[x]);
@@ -99,7 +98,6 @@ impl UnionFind {
     }
 
     /// Removes an element from the UnionFind.
-    /// TODO: shrink the size by change of data structure
     pub fn remove(&mut self, x: usize) {
         if x < self.parent.len() {
             self.parent[x] = x;

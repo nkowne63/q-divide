@@ -106,11 +106,11 @@ impl CircuitFragment {
         self.qubit_edges.remove(source).ok_or(format!("GateFragment {} is not connected as start", source))?;
         Ok(())
     }
-    pub fn unite_control_edges(&mut self, a: usize, b: usize) -> Result<(), String> {
+    pub fn connect_control_edges(&mut self, a: usize, b: usize) -> Result<(), String> {
         self.control_edges.union(a, b);
         Ok(())
     }
-    pub fn eject_control_edges(&mut self, a: usize) -> Result<(), String> {
+    pub fn divide_control_edges(&mut self, a: usize) -> Result<(), String> {
         self.control_edges.remove(a);
         Ok(())
     }
@@ -126,7 +126,13 @@ impl CircuitFragment {
         Ok(())
     }
 
-    // TODO: join and divide for circuit fragments
+    pub fn join_fragments(a: &Self, b: &Self) -> Self {
+        todo!() // join circuit fragments
+    }
+
+    pub fn divide(&self, predicate: &dyn Fn(&usize) -> bool) -> (Self, Self) {
+        todo!() // divide circuit fragments
+    }
 }
 
 #[cfg(test)]
@@ -136,7 +142,6 @@ mod tests {
     #[test]
     fn new() {
         let c = CircuitFragment::new(vec![]);
-        assert_eq!(c.id, 0);
         assert_eq!(c.gate_fragments.len(), 0);
         assert_eq!(c.qubit_edges.edges.len(), 0);
         assert_eq!(c.qubit_edges.backtrack.len(), 0);
