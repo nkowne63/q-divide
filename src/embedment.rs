@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use petgraph::visit::NodeRef;
+
 use super::circuits::QuantumCircuit;
 use super::fragments::circuit_fragments::CircuitFragment;
 
@@ -48,17 +50,31 @@ impl CircuitFragment {
 }
 
 impl GateDependencyGraph {
-    // TODO: return not only bool but sorted indices
-    fn has_loop(&self) -> bool {
+    fn toposort(&self) -> Result<Vec<usize>, String> {
         use petgraph::{
             algo::{toposort, DfsSpace},
             graph::DiGraph
         };
+        let edges = self.edges.iter().map(|(a, b)| (*a, *b)).collect::<Vec<_>>();
+        let mut occuring_indices = edges.iter().flat_map(|(a, b)| vec![*a, *b]).collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        occuring_indices.sort();
+        let occuring_indices_sorted = occuring_indices.clone();
+        let edges_indices_mapped = edges.iter().map(|(a, b)| {
+            // map edge to ocuuring_indices index
+            let a_mapped = occuring_indices.iter().position(|x| x == a).unwrap() as u32;
+            let b_mapped = occuring_indices.iter().position(|x| x == b).unwrap() as u32;
+            return (a_mapped, b_mapped)
+        }).collect::<Vec<_>>();
         // from usize to u32
-        let g: DiGraph<(), ()> = DiGraph::from_edges(self.edges.iter().map(|(a, b)| (*a as u32, *b as u32)));
+        let g: DiGraph<(), ()> = DiGraph::from_edges(edges_indices_mapped.iter().map(|(a, b)| (*a as u32, *b as u32)));
         let mut dfs = DfsSpace::new(&g);
-        let result = toposort(&g, Some(&mut dfs));
-        return result.is_err();
+        let result = toposort(&g, Some(&mut dfs)).map_err(|err| {
+            format!("Graph has a loop including {:?}", err.node_id().index())
+        });
+        let inverse_mapped = result.map(|result| {
+            result.iter().map(|x| *occuring_indices_sorted.get(x.index()).unwrap()).collect::<Vec<_>>()
+        });
+        return inverse_mapped;
     }
 }
 
@@ -67,5 +83,39 @@ impl TryInto<QuantumCircuit> for CircuitFragment {
 
     fn try_into(self) -> Result<QuantumCircuit, Self::Error> {
         todo!() // convert into quantum circuit
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn dependency_graph_has_loop() {
+        let g = GateDependencyGraph {
+            edges: vec![(0, 1), (1, 2), (2, 0)].into_iter().collect()
+        };
+        assert_eq!(g.toposort(), Err("Graph has a loop including 2".to_string()));
+    }
+    #[test]
+    fn dependency_graph_no_loop() {
+        let g = GateDependencyGraph {
+            edges: vec![(0, 1), (1, 2)].into_iter().collect()
+        };
+        assert!(g.toposort().is_ok());
+    }
+    #[test]
+    fn dependency_graph_empty() {
+        let g = GateDependencyGraph {
+            edges: HashSet::new()
+        };
+        assert!(g.toposort().is_ok());
+    }
+    #[test]
+    fn dependency_graph_leap() {
+        let g = GateDependencyGraph {
+            edges: vec![(0, 5), (5, 2), (2, 3)].into_iter().collect()
+        };
+        assert!(g.toposort().is_ok());
+        assert_eq!(g.toposort().unwrap(), vec![0, 5, 2, 3]);
     }
 }
