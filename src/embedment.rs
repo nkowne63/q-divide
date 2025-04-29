@@ -48,8 +48,17 @@ impl CircuitFragment {
 }
 
 impl GateDependencyGraph {
+    // TODO: return not only bool but sorted indices
     fn has_loop(&self) -> bool {
-        todo!() // check and translate into QC
+        use petgraph::{
+            algo::{toposort, DfsSpace},
+            graph::DiGraph
+        };
+        // from usize to u32
+        let g: DiGraph<(), ()> = DiGraph::from_edges(self.edges.iter().map(|(a, b)| (*a as u32, *b as u32)));
+        let mut dfs = DfsSpace::new(&g);
+        let result = toposort(&g, Some(&mut dfs));
+        return result.is_err();
     }
 }
 
