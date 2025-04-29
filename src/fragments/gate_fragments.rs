@@ -34,6 +34,12 @@ impl GateFragmentLabel {
             _ => false,
         }
     }
+    pub fn is_unitary(&self) -> bool {
+        match self {
+            GateFragmentLabel::Unitary(_) => true,
+            _ => false,
+        }
+    }
 }
 
 use crate::utils::counters::Counter;
