@@ -141,6 +141,17 @@ impl UnionFind {
         }
         groups
     }
+
+    pub fn get_same_group(&mut self, x: usize) -> Vec<usize> {
+        let root = self.find(x);
+        let mut group = Vec::new();
+        for i in 0..self.parent.len() {
+            if self.find(i) == root && !self.deleted[i] {
+                group.push(i);
+            }
+        }
+        group
+    }
 }
 
 #[cfg(test)]
