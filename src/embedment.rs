@@ -1,7 +1,4 @@
 use std::collections::HashSet;
-
-use petgraph::visit::NodeRef;
-
 use super::circuits::QuantumCircuit;
 use super::fragments::circuit_fragments::CircuitFragment;
 
@@ -36,13 +33,16 @@ impl CircuitFragment {
         GateDependencyGraph { edges }
     }
     fn check_all_uniatry(&mut self) -> Result<(), String> {
+        let get_gate_fragment_label = |id: &usize| {
+            self.gate_fragments.iter().find(|gf| gf.id == *id).unwrap().label.clone()
+        };
         for (unitary_id, unitary_belongings) in self.control_edges.get_groups() {
-            for fragment in unitary_belongings {
-                match self.gate_fragments.get(fragment) {
-                    None => return Err(format!("Gate Fragment {} not found at Circuit Fragment {}", fragment, self.id)),
-                    Some(gate_fragment) if gate_fragment.is_measurement() => return Err(format!("Gate Fragment {} is a measurement at Circuit Fragment {}", fragment, self.id)),
-                    Some(_) => {}
-                }
+            // ensure no measurement in unitaries
+            let no_measurement = unitary_belongings.iter().filter(|idx| get_gate_fragment_label(*idx).is_measurement()).count() == 0;
+            // ensure at least one unitary
+            let has_unitary = unitary_belongings.iter().filter(|idx| get_gate_fragment_label(*idx).is_unitary()).count() > 0;
+            if !no_measurement || !has_unitary {
+                return Err(format!("The group contains GateFragment {} has no unitary or measurement", unitary_id));
             }
         }
         Ok(())
@@ -81,7 +81,16 @@ impl GateDependencyGraph {
 impl TryInto<QuantumCircuit> for CircuitFragment {
     type Error = String;
 
-    fn try_into(self) -> Result<QuantumCircuit, Self::Error> {
+    fn try_into(mut self) -> Result<QuantumCircuit, Self::Error> {
+        self.check_all_uniatry()?;
+        let toposorted = self.into_dependency_graph().toposort()?;
+        let fragment_groups = toposorted.into_iter().map(|gate_fragment_id| {
+            let fragments = self.control_edges.get_same_group(gate_fragment_id).iter().map(|id| {
+                self.gate_fragments.iter().find(|gf| gf.id == *id).unwrap().clone()
+            }).collect::<Vec<_>>();
+            todo!() // add measurement dependency + convert to quantum gate
+        }).collect::<Vec<_>>();
+
         todo!() // convert into quantum circuit
     }
 }
