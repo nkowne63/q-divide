@@ -54,6 +54,9 @@ impl GateFragment {
             label
         }
     }
+    pub fn is_measurement(&self) -> bool {
+        self.label.is_measurement()
+    }
 }
 
 impl From<GateFragmentLabel> for GateFragment {
