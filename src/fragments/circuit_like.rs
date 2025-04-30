@@ -64,7 +64,7 @@ impl CircuitLike {
     fn measure(&mut self, qubits: Vec<usize>, label: String) -> DanglingFeedback {
         todo!(); // add measure
     }
-    fn control_connect(&mut self, edges: (&DanglingControl, DanglingTarget)) -> Result<(), String> {
+    fn control_connect(&mut self, edges: (&DanglingControl, DanglingTarget)) -> Result<DanglingTarget, String> {
         todo!(); // add connect + enable 1 control M target
     }
     fn feedback_connect(&mut self, edges: (DanglingFeedback, DanglingTarget)) -> Result<(), String> {
