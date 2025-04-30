@@ -2,7 +2,7 @@ use derive_more::Display;
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Hash, Eq, PartialEq, Display, Clone, Copy, Serialize, Deserialize)]
+#[derive(Hash, Eq, PartialEq, Display, Clone, Serialize, Deserialize)]
 pub enum Unitary {
     X,
     Y,
@@ -12,6 +12,7 @@ pub enum Unitary {
     S,
     Tdag,
     Sdag,
+    Other(String)
 }
 
 #[derive(Hash, Eq, PartialEq, Display, Clone, Serialize, Deserialize)]
@@ -44,7 +45,7 @@ impl GateFragmentLabel {
 
 use crate::utils::counters::Counter;
 
-static GLOBAL_GATE_FRAGMENT_ID: Counter = Counter::new();
+pub static GLOBAL_GATE_FRAGMENT_ID: Counter = Counter::new();
 
 #[derive(Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct GateFragment {

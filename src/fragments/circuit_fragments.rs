@@ -81,7 +81,7 @@ impl CircuitFragment {
 
     pub fn add_gate_fragment(&mut self, gate_fragment: GateFragment) -> Result<(), String> {
         self.gate_fragments.push(gate_fragment);
-        self.control_edges.ensure(self.gate_fragments.len());
+        self.control_edges.ensure(self.gate_fragments.len()); // TODO: check the union find idx and gf.id are comatible
 
         Ok(())
     }
@@ -126,11 +126,14 @@ impl CircuitFragment {
         Ok(())
     }
 
-    pub fn join_fragments(a: &Self, b: &Self) -> Self {
+    pub fn join_fragments(_a: &Self, _b: &Self) -> Self {
         todo!() // join circuit fragments
     }
 
-    pub fn divide(&self, predicate: &dyn Fn(&usize) -> bool) -> (Self, Self) {
+    pub fn divide(&self, predicate: Vec<bool>) -> Result<(Self, Self), String> {
+        if predicate.len() != self.gate_fragments.len() {
+            return Err(format!("Predicate length {} does not match circuit fragment length {}", predicate.len(), self.gate_fragments.len()));
+        }
         todo!() // divide circuit fragments
     }
 }

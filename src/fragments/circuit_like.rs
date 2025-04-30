@@ -1,31 +1,70 @@
-use super::circuit_fragments::CircuitFragment;
+use std::{collections::HashMap, result::Result};
+use super::{circuit_fragments::CircuitFragment, gate_fragments::{GateFragment, GateFragmentLabel, Unitary}};
 
 struct Gate {
-    gate_type: String
+    gate_type: Unitary
 }
 
-struct DanglingEdge {
-    gate_fragment_index: usize
+impl Into<GateFragment> for &Gate {
+    fn into(self) -> GateFragment {
+        let label = GateFragmentLabel::Unitary(self.gate_type.clone());
+        GateFragment::new(label)
+    }
+}
+
+struct DanglingFeedback {
+    measurement: Vec<usize>,
+    label: String
+}
+
+struct DanglingTarget {
+    fragment: usize
+}
+
+struct DanglingControl {
+    fragment: usize
+}
+
+struct QubitWiseFragmentInfo {
+    initial: usize,
+    latest: usize
 }
 
 struct CircuitLike {
-    fragment: CircuitFragment
+    fragment: CircuitFragment,
+    qubitwise_fragments: HashMap<usize, QubitWiseFragmentInfo>,
 }
 
 impl CircuitLike {
-    fn gate(&mut self, qubit: usize, gate: Gate) {
-        todo!(); // add gate
+    fn new() -> Self {
+        CircuitLike {
+            fragment: CircuitFragment::new(vec![]),
+            qubitwise_fragments: HashMap::new(),
+        }
     }
-    fn control(&mut self, control_qubits: Vec<usize>) -> Vec<DanglingEdge> {
+    fn sq_gate(&mut self, qubit: usize, gate: &Gate) -> Result<DanglingTarget, String> {
+        let gate_fragment: GateFragment = gate.into();
+        self.fragment.add_gate_fragment(gate_fragment.clone())?;
+        let qubitwise_fragment_info = self.qubitwise_fragments.get(&qubit);
+        match qubitwise_fragment_info {
+            None => {
+                self.qubitwise_fragments.insert(qubit, QubitWiseFragmentInfo { initial: gate_fragment.id, latest: gate_fragment.id });
+            }
+            Some(info) => {
+                let latest = info.latest;
+                self.fragment.connect_qubit_edges(latest, gate_fragment.id)?;
+                self.qubitwise_fragments.insert(qubit, QubitWiseFragmentInfo { initial: info.initial, latest: gate_fragment.id });
+            }
+        }
+        Ok(DanglingTarget { fragment: gate_fragment.id })
+    }
+    fn control(&mut self, control_qubit: usize) -> DanglingControl {
         todo!(); // add control
     }
-    fn target(&mut self, target_qubits: Vec<usize>) -> Vec<DanglingEdge> {
-        todo!(); // add target
-    }
-    fn measure(&mut self, qubit: usize, label: String) -> Vec<DanglingEdge> {
+    fn measure(&mut self, qubits: Vec<usize>, label: String) -> DanglingFeedback {
         todo!(); // add measure
     }
-    fn connect(&mut self, edges: Vec<DanglingEdge>) -> Result<(), String> {
+    fn control_connect(&mut self, edges: (usize, usize)) -> Result<usize, String> {
         todo!(); // add connect
     }
 }
