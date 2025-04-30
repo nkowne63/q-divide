@@ -18,11 +18,11 @@ struct DanglingFeedback {
 }
 
 struct DanglingTarget {
-    fragment: usize
+    gate_fragment: usize
 }
 
 struct DanglingControl {
-    fragment: usize
+    gate_fragment: usize
 }
 
 struct QubitWiseFragmentInfo {
@@ -56,7 +56,7 @@ impl CircuitLike {
                 self.qubitwise_fragments.insert(qubit, QubitWiseFragmentInfo { initial: info.initial, latest: gate_fragment.id });
             }
         }
-        Ok(DanglingTarget { fragment: gate_fragment.id })
+        Ok(DanglingTarget { gate_fragment: gate_fragment.id })
     }
     fn control(&mut self, control_qubit: usize) -> DanglingControl {
         todo!(); // add control
@@ -64,7 +64,10 @@ impl CircuitLike {
     fn measure(&mut self, qubits: Vec<usize>, label: String) -> DanglingFeedback {
         todo!(); // add measure
     }
-    fn control_connect(&mut self, edges: (usize, usize)) -> Result<usize, String> {
+    fn control_connect(&mut self, edges: (&DanglingControl, DanglingTarget)) -> Result<(), String> {
+        todo!(); // add connect + enable 1 control M target
+    }
+    fn feedback_connect(&mut self, edges: (DanglingFeedback, DanglingTarget)) -> Result<(), String> {
         todo!(); // add connect
     }
 }
