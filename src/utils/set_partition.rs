@@ -62,6 +62,7 @@ impl SetPartition {
     // Removes an element from the set.
     // If the element is part of a subset, it's removed from that subset.
     // If the subset becomes empty after removal, the subset itself is removed.
+    // If the element doesn't exist, this is a no-op (compatible with UnionFind behavior).
     pub fn remove_element(&mut self, element: usize) {
         if let Some(subset_idx) = self.element_to_subset_index.remove(&element) {
             if let Some(set) = self.subsets.get_mut(subset_idx) {
@@ -147,6 +148,47 @@ impl SetPartition {
     // Each subset is a HashSet<usize>.
     pub fn list_subsets(&self) -> Vec<HashSet<usize>> {
         self.subsets.iter().filter(|s| !s.is_empty()).cloned().collect()
+    }
+
+    // Returns the representative element of the set containing the given element.
+    // Compatibility method with UnionFind.
+    pub fn find(&self, element: usize) -> usize {
+        if let Some(subset_idx) = self.element_to_subset_index.get(&element) {
+            // Return the smallest element in the subset as representative
+            if let Some(subset) = self.subsets.get(*subset_idx) {
+                return *subset.iter().min().unwrap_or(&element);
+            }
+        }
+        element // If element not found, return itself
+    }
+
+    // Returns groups as HashMap where key is representative and value is all elements.
+    // Compatibility method with UnionFind.
+    pub fn get_groups(&self) -> HashMap<usize, Vec<usize>> {
+        let mut groups = HashMap::new();
+        for subset in &self.subsets {
+            if subset.is_empty() {
+                continue;
+            }
+            let representative = *subset.iter().min().unwrap();
+            let mut elements: Vec<usize> = subset.iter().cloned().collect();
+            elements.sort();
+            groups.insert(representative, elements);
+        }
+        groups
+    }
+
+    // Returns all elements in the same group as the given element.
+    // Compatibility method with UnionFind.
+    pub fn get_same_group(&self, element: usize) -> Vec<usize> {
+        if let Some(subset_idx) = self.element_to_subset_index.get(&element) {
+            if let Some(subset) = self.subsets.get(*subset_idx) {
+                let mut elements: Vec<usize> = subset.iter().cloned().collect();
+                elements.sort();
+                return elements;
+            }
+        }
+        vec![element] // If element not found, return itself
     }
 }
 
