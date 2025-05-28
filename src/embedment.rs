@@ -84,8 +84,8 @@ impl TryInto<QuantumCircuit> for CircuitFragment {
     fn try_into(mut self) -> Result<QuantumCircuit, Self::Error> {
         self.check_all_uniatry()?;
         let toposorted = self.into_dependency_graph().toposort()?;
-        let fragment_groups = toposorted.into_iter().map(|gate_fragment_id| {
-            let fragments = self.control_edges.get_same_group(gate_fragment_id).iter().map(|id| {
+        let _fragment_groups = toposorted.into_iter().map(|gate_fragment_id| {
+            let _fragments = self.control_edges.get_same_group(gate_fragment_id).iter().map(|id| {
                 self.gate_fragments.iter().find(|gf| gf.id == *id).unwrap().clone()
             }).collect::<Vec<_>>();
             todo!() // add measurement dependency + convert to quantum gate

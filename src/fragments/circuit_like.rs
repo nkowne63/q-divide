@@ -12,11 +12,13 @@ impl Into<GateFragment> for &Gate {
     }
 }
 
+#[allow(dead_code)]
 struct DanglingFeedback {
     measurement: Vec<usize>,
     label: String
 }
 
+#[allow(dead_code)]
 struct DanglingTarget {
     gate_fragment: usize
 }
@@ -89,13 +91,16 @@ impl CircuitLike {
         
         DanglingControl { gate_fragment: gate_id }
     }
-    fn measure(&mut self, qubits: Vec<usize>, label: String) -> DanglingFeedback {
+    #[allow(dead_code)]
+    fn measure(&mut self, _qubits: Vec<usize>, _label: String) -> DanglingFeedback {
         todo!(); // add measure
     }
-    fn control_connect(&mut self, edges: (&DanglingControl, DanglingTarget)) -> Result<DanglingTarget, String> {
+    #[allow(dead_code)]
+    fn control_connect(&mut self, _edges: (&DanglingControl, DanglingTarget)) -> Result<DanglingTarget, String> {
         todo!(); // add connect + enable 1 control M target
     }
-    fn feedback_connect(&mut self, edges: (DanglingFeedback, DanglingTarget)) -> Result<(), String> {
+    #[allow(dead_code)]
+    fn feedback_connect(&mut self, _edges: (DanglingFeedback, DanglingTarget)) -> Result<(), String> {
         todo!(); // add connect
     }
 }
