@@ -91,9 +91,45 @@ impl CircuitLike {
         
         DanglingControl { gate_fragment: gate_id }
     }
-    #[allow(dead_code)]
-    fn measure(&mut self, _qubits: Vec<usize>, _label: String) -> DanglingFeedback {
-        todo!(); // add measure
+    fn measure(&mut self, qubits: Vec<usize>, label: String) -> DanglingFeedback {
+        // create measurement gate fragments for each qubit and add to circuit fragment
+        let mut measurement_gates = Vec::new();
+        
+        for &qubit in &qubits {
+            // Create measurement gate fragment
+            let measurement_gate_fragment = GateFragment::new(GateFragmentLabel::Instrument);
+            let gate_id = measurement_gate_fragment.id;
+            measurement_gates.push(gate_id);
+            
+            // Add the measurement gate fragment to the circuit
+            self.fragment.add_gate_fragment(measurement_gate_fragment).expect("Failed to add measurement gate fragment");
+            
+            // Update qubitwise fragment information for the measured qubit
+            let qubitwise_fragment_info = self.qubitwise_fragments.get(&qubit);
+            match qubitwise_fragment_info {
+                None => {
+                    // First gate on this qubit
+                    self.qubitwise_fragments.insert(qubit, QubitWiseFragmentInfo { 
+                        initial: gate_id, 
+                        latest: gate_id 
+                    });
+                }
+                Some(info) => {
+                    // Connect to the previous gate on this qubit
+                    let latest = info.latest;
+                    self.fragment.connect_qubit_edges(latest, gate_id).expect("Failed to connect qubit edges");
+                    self.qubitwise_fragments.insert(qubit, QubitWiseFragmentInfo { 
+                        initial: info.initial, 
+                        latest: gate_id 
+                    });
+                }
+            }
+        }
+        
+        DanglingFeedback { 
+            measurement: measurement_gates,
+            label 
+        }
     }
     #[allow(dead_code)]
     fn control_connect(&mut self, _edges: (&DanglingControl, DanglingTarget)) -> Result<DanglingTarget, String> {
@@ -194,5 +230,138 @@ mod tests {
         // Verify the returned DanglingControl points to the correct gate fragment
         let gate_fragment = &circuit.fragment.gate_fragments[0];
         assert_eq!(dangling_control.gate_fragment, gate_fragment.id);
+    }
+
+    #[test]
+    fn test_measure_creates_measurement_gate_fragments() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![0, 1];
+        let label = "measurement_1".to_string();
+        
+        let dangling_feedback = circuit.measure(qubits.clone(), label.clone());
+        
+        // Verify that measurement gate fragments were added to the circuit
+        assert_eq!(circuit.fragment.gate_fragments.len(), 2);
+        
+        // Verify that the gate fragments are measurement gates
+        for (i, &qubit) in qubits.iter().enumerate() {
+            let gate_fragment = &circuit.fragment.gate_fragments[i];
+            assert_eq!(gate_fragment.id, dangling_feedback.measurement[i]);
+            match &gate_fragment.label {
+                GateFragmentLabel::Instrument => {},
+                _ => panic!("Expected Instrument gate fragment for qubit {}", qubit),
+            }
+        }
+        
+        // Verify the label is correct
+        assert_eq!(dangling_feedback.label, label);
+    }
+
+    #[test]
+    fn test_measure_updates_qubitwise_fragments_first_gates() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![0, 1];
+        let label = "measurement_1".to_string();
+        
+        let dangling_feedback = circuit.measure(qubits.clone(), label);
+        
+        // Verify qubitwise fragment information is updated for each qubit
+        for (i, &qubit) in qubits.iter().enumerate() {
+            let qubit_info = circuit.qubitwise_fragments.get(&qubit).unwrap();
+            assert_eq!(qubit_info.initial, dangling_feedback.measurement[i]);
+            assert_eq!(qubit_info.latest, dangling_feedback.measurement[i]);
+        }
+    }
+
+    #[test]
+    fn test_measure_connects_to_previous_gates_on_qubits() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![0, 1];
+        let gate = Gate { gate_type: Unitary::H };
+        let label = "measurement_1".to_string();
+        
+        // Add gates first
+        let _target0 = circuit.sq_gate(0, &gate).unwrap();
+        let _target1 = circuit.sq_gate(1, &gate).unwrap();
+        
+        // Then add measurements
+        let dangling_feedback = circuit.measure(qubits.clone(), label);
+        
+        // Verify four gate fragments exist (2 H gates + 2 measurement gates)
+        assert_eq!(circuit.fragment.gate_fragments.len(), 4);
+        
+        // Verify qubitwise fragment information is updated
+        for (i, &qubit) in qubits.iter().enumerate() {
+            let qubit_info = circuit.qubitwise_fragments.get(&qubit).unwrap();
+            assert_eq!(qubit_info.latest, dangling_feedback.measurement[i]);
+        }
+        
+        // Verify that measurement gates are connected to previous gates
+        let h_gate0_id = circuit.fragment.gate_fragments[0].id;
+        let h_gate1_id = circuit.fragment.gate_fragments[1].id;
+        let measure_gate0_id = circuit.fragment.gate_fragments[2].id;
+        let measure_gate1_id = circuit.fragment.gate_fragments[3].id;
+        
+        assert_eq!(circuit.fragment.qubit_edges.edges.get(&h_gate0_id), Some(&measure_gate0_id));
+        assert_eq!(circuit.fragment.qubit_edges.edges.get(&h_gate1_id), Some(&measure_gate1_id));
+    }
+
+    #[test]
+    fn test_measure_single_qubit() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![0];
+        let label = "single_measurement".to_string();
+        
+        let dangling_feedback = circuit.measure(qubits, label.clone());
+        
+        // Verify one measurement gate fragment was added
+        assert_eq!(circuit.fragment.gate_fragments.len(), 1);
+        assert_eq!(dangling_feedback.measurement.len(), 1);
+        
+        // Verify the gate fragment is a measurement gate
+        let gate_fragment = &circuit.fragment.gate_fragments[0];
+        assert_eq!(gate_fragment.id, dangling_feedback.measurement[0]);
+        match &gate_fragment.label {
+            GateFragmentLabel::Instrument => {},
+            _ => panic!("Expected Instrument gate fragment"),
+        }
+        
+        // Verify the label
+        assert_eq!(dangling_feedback.label, label);
+    }
+
+    #[test]
+    fn test_measure_empty_qubits() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![];
+        let label = "empty_measurement".to_string();
+        
+        let dangling_feedback = circuit.measure(qubits, label.clone());
+        
+        // Verify no gate fragments were added
+        assert_eq!(circuit.fragment.gate_fragments.len(), 0);
+        assert_eq!(dangling_feedback.measurement.len(), 0);
+        
+        // Verify the label
+        assert_eq!(dangling_feedback.label, label);
+    }
+
+    #[test]
+    fn test_measure_returns_correct_dangling_feedback() {
+        let mut circuit = CircuitLike::new();
+        let qubits = vec![0, 1];
+        let label = "test_measurement".to_string();
+        
+        let dangling_feedback = circuit.measure(qubits.clone(), label.clone());
+        
+        // Verify the returned DanglingFeedback contains correct measurement gate IDs
+        assert_eq!(dangling_feedback.measurement.len(), qubits.len());
+        for (i, &expected_id) in dangling_feedback.measurement.iter().enumerate() {
+            let gate_fragment = &circuit.fragment.gate_fragments[i];
+            assert_eq!(gate_fragment.id, expected_id);
+        }
+        
+        // Verify the label
+        assert_eq!(dangling_feedback.label, label);
     }
 }
