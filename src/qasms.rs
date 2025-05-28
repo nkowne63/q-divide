@@ -26,6 +26,5 @@ impl From<QuantumCircuit> for OpenQasmCircuit {
 impl Display for OpenQasmCircuit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         todo!(); // string output
-        write!(f, "qasm")
     }
 }
