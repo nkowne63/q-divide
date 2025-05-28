@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Gate {
-    label: String,
-    span_qubit_number: usize,
-    is_measurement: bool
+    pub label: String,
+    pub span_qubit_number: usize,
+    pub is_measurement: bool
 }
 
 impl Gate {
@@ -20,15 +20,15 @@ impl Gate {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MeasurementDependence {
-    label: String,
-    dependent_measurement_ids: Vec<usize>
+    pub label: String,
+    pub dependent_measurement_ids: Vec<usize>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GateAction {
-    gate: Gate,
-    qubits: Vec<usize>,
-    measurement_dependence: Option<MeasurementDependence>
+    pub gate: Gate,
+    pub qubits: Vec<usize>,
+    pub measurement_dependence: Option<MeasurementDependence>
 }
 
 impl GateAction {
@@ -44,12 +44,12 @@ impl GateAction {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuantumCircuit {
-    gates: Vec<GateAction>,
-    qubits: usize
+    pub gates: Vec<GateAction>,
+    pub qubits: usize
 }
 
 impl QuantumCircuit {
-    pub fn validation(self) {
+    pub fn validation(&self) {
         for idx in 0..self.gates.len() {
             let gate = &self.gates[idx];
             if let Some(measurement_dependence) = &gate.measurement_dependence {
